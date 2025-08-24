@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudWatch alarms for EC2 + EventBridge integration with EXISTING Lambda for Bedrock invocation'
+
+Parameters:
+  LambdaFunctionName:
+    Type: String
+    Description: Name of the already-created Lambda function
+
+  EC2InstanceId:
+    Type: String
+    Description: EC2 Instance ID to monitor (e.g., i-xxxxxxxxxxxxxxxxx)
+
+Resources:
+  # --- SNS Topic for Alarm Notifications ---
+  ErrorNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: !Sub '${LambdaFunctionName}-Error-Notifications'
+      TopicName: !Sub '${LambdaFunctionName}-Error-Notifications'
+
+  # --- CloudWatch Alarm for CPU Usage ---
+  HighCPUUsageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'HighCPU-${EC2InstanceId}'
+      AlarmDescription: Alarm when EC2 CPU > 0%
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref EC2InstanceId
+      Statistic: Average
+      Period: 10
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref ErrorNotificationTopic
+
+  # --- CloudWatch Alarm for Disk Usage ---
+  DiskUsageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'DiskUsage-${EC2InstanceId}'
+      AlarmDescription: Alarm when EC2 disk usage > 0%
+      Namespace: CWAgent
+      MetricName: disk_used_percent
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref EC2InstanceId
+        - Name: path
+          Value: /
+        - Name: fstype
+          Value: ext4
+        - Name: device
+          Value: nvme0n1p1
+      Statistic: Average
+      Period: 10
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref ErrorNotificationTopic
+
+  # --- EventBridge Rule to capture all ALARM state changes ---
+  AlarmStateChangeRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: oncall-eventbridge
+      EventPattern:
+        source:
+          - "aws.cloudwatch"
+        detail-type:
+          - "CloudWatch Alarm State Change"
+        detail:
+          state:
+            value:
+              - "ALARM"
+      Targets:
+        - Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaFunctionName}
+          Id: OnCallLambdaTarget
+
+  # --- Permission for EventBridge to invoke Lambda ---
+  EventBridgeInvokeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt AlarmStateChangeRule.Arn
+
+Outputs:
+  LambdaFunctionNameOutput:
+    Description: Name of the Lambda function
+    Value: !Ref LambdaFunctionName

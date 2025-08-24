@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  # Table 1: Instance details with simple key
+  OncallInstancesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: oncall-instances
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: instance_id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: updated_at
+          AttributeType: S
+      KeySchema:
+        - AttributeName: instance_id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatusIndex
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+            - AttributeName: updated_at
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: Production
+        - Key: Purpose
+          Value: Terminal MCP Instances
+
+  # Table 2: Chat messages with simple key structure
+  OncallMessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: oncall-messages
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: instance_id
+          AttributeType: S
+        - AttributeName: message_id
+          AttributeType: S
+        - AttributeName: message_order
+          AttributeType: N
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: instance_id
+          KeyType: HASH
+        - AttributeName: message_id
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: MessageOrderIndex
+          KeySchema:
+            - AttributeName: instance_id
+              KeyType: HASH
+            - AttributeName: message_order
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: TimestampIndex
+          KeySchema:
+            - AttributeName: instance_id
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: Production
+        - Key: Purpose
+          Value: Terminal MCP Messages
+
+  # Lambda function
+#   ChatHandlerFunction:
+#     Type: AWS::Serverless::Function
+#     Properties:
+#       CodeUri: ../lambda/
+#       Handler: chat_handler.lambda_handler
+#       Runtime: python3.12
+#       Timeout: 30
+#       MemorySize: 512
+#       Environment:
+#         Variables:
+#           INSTANCES_TABLE: !Ref OncallInstancesTable
+#           MESSAGES_TABLE: !Ref OncallMessagesTable
+#       Policies:
+#         - DynamoDBCrudPolicy:
+#             TableName: !Ref OncallInstancesTable
+#         - DynamoDBCrudPolicy:
+#             TableName: !Ref OncallMessagesTable
+#         - Version: '2012-10-17'
+#           Statement:
+#             - Effect: Allow
+#               Action:
+#                 - bedrock:InvokeModel
+#               Resource: '*'
+
+# Outputs:
+#   InstancesTableName:
+#     Description: Name of the instances table
+#     Value: !Ref OncallInstancesTable
+#     Export:
+#       Name: !Sub "${AWS::StackName}-InstancesTable"
+  
+#   MessagesTableName:
+#     Description: Name of the messages table
+#     Value: !Ref OncallMessagesTable
+#     Export:
+#       Name: !Sub "${AWS::StackName}-MessagesTable"
+  
+#   ChatHandlerFunctionArn:
+#     Description: ARN of the Chat Handler Lambda function
+#     Value: !GetAtt ChatHandlerFunction.Arn
+#     Export:
+#       Name: !Sub "${AWS::StackName}-ChatHandlerFunction"

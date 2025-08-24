@@ -1,0 +1,164 @@
+# # 🚫 SSM Command Execution Failed - Permission Issue
+
+# ## ❌ **Command Status: Access Denied**
+
+# **Query:** Run ps aux --sort=-%cpu | head -20 on instance i-03326536e3f1be717  
+# **Region:** us-east-1  
+# **Execution Time:** 21.75 seconds  
+# **Request ID:** 63fde0f9-65b1-4778-9f5e-0d1dce3ac5ae
+
+# ---
+
+# ## 🔍 **Root Cause: IAM Permission Issues**
+
+# ### **Missing SSM Permissions:**
+# The Lambda function's IAM role `oncall-iam/oncall-lambda-4` lacks the following permissions:
+
+# ```json
+# {
+#   "Error": "AccessDeniedException",
+#   "Missing Permissions": [
+#     "ssm:SendCommand",
+#     "ssm:DescribeInstanceInformation"
+#   ],
+#   "User": "arn:aws:sts::508226150422:assumed-role/oncall-iam/oncall-lambda-4"
+# }
+# ```
+
+# ---
+
+# ## ✅ **Instance Details Confirmed**
+
+# | Property | Value |
+# |----------|-------|
+# | **Instance ID** | i-03326536e3f1be717 |
+# | **Name** | oncall-ec2-2 |
+# | **State** | ✅ Running |
+# | **Type** | t2.micro |
+# | **Platform** | Linux/UNIX |
+# | **Architecture** | x86_64 |
+# | **Public IP** | 18.207.205.56 |
+# | **Private IP** | 172.31.82.20 |
+# | **Availability Zone** | us-east-1a |
+# | **VPC ID** | vpc-0df1203025b72caa9 |
+# | **Security Group** | launch-wizard-16 |
+# | **Launch Time** | 2025-07-10T18:37:46+00:00 |
+
+# ---
+
+# ## 🛠️ **Solutions to Fix SSM Access**
+
+# ### **Option 1: Update Lambda IAM Role (Recommended)**
+
+# Add these permissions to the `oncall-iam` role:
+
+# ```json
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow",
+#       "Action": [
+#         "ssm:SendCommand",
+#         "ssm:GetCommandInvocation",
+#         "ssm:DescribeInstanceInformation",
+#         "ssm:ListCommands",
+#         "ssm:ListCommandInvocations"
+#       ],
+#       "Resource": [
+#         "arn:aws:ec2:*:*:instance/*",
+#         "arn:aws:ssm:*:*:document/AWS-RunShellScript",
+#         "arn:aws:ssm:*:*:*"
+#       ]
+#     }
+#   ]
+# }
+# ```
+
+# ### **Option 2: Use AWS CLI Directly**
+
+# ```bash
+# # Add SSM permissions to your AWS CLI profile, then run:
+# aws ssm send-command \
+#     --instance-ids "i-03326536e3f1be717" \
+#     --document-name "AWS-RunShellScript" \
+#     --parameters 'commands=["ps aux --sort=-%cpu | head -20"]' \
+#     --region us-east-1
+# ```
+
+# ### **Option 3: SSH Direct Access**
+
+# ```bash
+# # If you have the oncall-ec2-key:
+# ssh -i /path/to/oncall-ec2-key.pem ec2-user@18.207.205.56
+# # Then run: ps aux --sort=-%cpu | head -20
+# ```
+
+# ---
+
+# ## 🔧 **IAM Policy Template**
+
+# Here's the complete IAM policy needed for full SSM functionality:
+
+# ```json
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Sid": "SSMCommandExecution",
+#       "Effect": "Allow",
+#       "Action": [
+#         "ssm:SendCommand",
+#         "ssm:GetCommandInvocation",
+#         "ssm:DescribeInstanceInformation",
+#         "ssm:ListCommands",
+#         "ssm:ListCommandInvocations",
+#         "ssm:DescribeInstanceAssociationsStatus",
+#         "ssm:GetAutomationExecution"
+#       ],
+#       "Resource": "*"
+#     },
+#     {
+#       "Sid": "EC2DescribeForSSM",
+#       "Effect": "Allow",
+#       "Action": [
+#         "ec2:DescribeInstances",
+#         "ec2:DescribeInstanceStatus"
+#       ],
+#       "Resource": "*"
+#     }
+#   ]
+# }
+# ```
+
+# ---
+
+# ## ⚡ **Quick Fix Steps**
+
+# 1. **Go to AWS IAM Console**
+# 2. **Find the `oncall-iam` role**
+# 3. **Attach the `AmazonSSMFullAccess` policy** (or create custom policy above)
+# 4. **Wait 1-2 minutes for propagation**
+# 5. **Retry the command**
+
+# ---
+
+# ## 🎯 **Alternative Monitoring Options**
+
+# While fixing permissions, you can still monitor the instance via:
+
+# - **CloudWatch Metrics** - CPU, Memory, Disk usage
+# - **CloudWatch Logs** - Application and system logs
+# - **AWS Systems Manager Session Manager** (if permissions allow)
+# - **Direct SSH access** using the key pair
+
+# ---
+
+# ## 📊 **Summary**
+
+# - **✅ Instance is healthy and running**
+# - **❌ SSM permissions missing from Lambda role**
+# - **🔧 Easy fix: Add SSM permissions to IAM role**
+# - **⏱️ Should work within minutes after permission update**
+
+# **Fix the IAM permissions and the SSM commands will work perfectly!** 🚀

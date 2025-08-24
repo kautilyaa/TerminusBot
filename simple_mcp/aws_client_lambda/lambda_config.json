@@ -1,0 +1,1003 @@
+[
+    {
+        "toolSpec": {
+            "name": "list_ec2_instances",
+            "description": "List EC2 instances with their details",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_ec2_instance_details",
+            "description": "Get detailed information about a specific EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "find_ec2_by_name",
+            "description": "Find EC2 instances by name tag (partial matches allowed)",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Instance name to search for"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["name"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "start_ec2_instance",
+            "description": "Start an EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "stop_ec2_instance",
+            "description": "Stop an EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    
+    {
+        "toolSpec": {
+            "name": "list_ssm_managed_instances",
+            "description": "List SSM managed instances",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "run_ssm_command",
+            "description": "Run commands on EC2 instances via SSM",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_ids": {"type": "string", "description": "Comma-separated instance IDs"},
+                        "commands": {"type": "string", "description": "Commands to run (separated by newlines or semicolons)"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "wait_for_completion": {"type": "boolean", "description": "Whether to wait for completion"},
+                        "max_wait_time": {"type": "integer", "description": "Maximum wait time in seconds"}
+                    },
+                    "required": ["instance_ids", "commands"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "run_quick_ssm_command",
+            "description": "Run a quick single command on an instance and get output",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "Instance ID"},
+                        "command": {"type": "string", "description": "Command to run"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id", "command"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "check_ssm_connectivity",
+            "description": "Check if an instance is reachable via SSM",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "Instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_instance_system_info",
+            "description": "Get comprehensive system information from an instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "Instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_instance_logs_via_ssm",
+            "description": "Get log files from an instance via SSM",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "Instance ID"},
+                        "log_file": {"type": "string", "description": "Path to log file"},
+                        "lines": {"type": "integer", "description": "Number of lines to retrieve"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    
+    {
+        "toolSpec": {
+            "name": "list_s3_buckets",
+            "description": "List all S3 buckets",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region filter"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "list_s3_objects",
+            "description": "List objects in an S3 bucket",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "bucket_name": {"type": "string", "description": "S3 bucket name"},
+                        "prefix": {"type": "string", "description": "Object prefix filter"},
+                        "max_keys": {"type": "integer", "description": "Maximum number of keys to return"}
+                    },
+                    "required": ["bucket_name"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "create_s3_bucket",
+            "description": "Create a new S3 bucket",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "bucket_name": {"type": "string", "description": "S3 bucket name"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["bucket_name"]
+                }
+            }
+        }
+    },
+    
+    {
+        "toolSpec": {
+            "name": "list_rds_instances",
+            "description": "List RDS database instances",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "describe_rds_instance",
+            "description": "Get detailed information about an RDS instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_identifier": {"type": "string", "description": "RDS instance identifier"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_identifier"]
+                }
+            }
+        }
+    },
+    
+    {
+        "toolSpec": {
+            "name": "list_cloudwatch_log_groups",
+            "description": "List CloudWatch log groups",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"},
+                        "max_groups": {"type": "integer", "description": "Maximum number of groups to return"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "list_cloudwatch_log_streams",
+            "description": "List log streams in a CloudWatch log group",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "log_group_name": {"type": "string", "description": "CloudWatch log group name"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "max_streams": {"type": "integer", "description": "Maximum number of streams"},
+                        "order_by": {"type": "string", "description": "Order streams by LogStreamName or LastEventTime"}
+                    },
+                    "required": ["log_group_name"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_cloudwatch_logs",
+            "description": "Get CloudWatch logs from a log group",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "log_group_name": {"type": "string", "description": "CloudWatch log group name"},
+                        "log_stream_name": {"type": "string", "description": "Specific log stream name"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to search"},
+                        "max_events": {"type": "integer", "description": "Maximum number of events"},
+                        "filter_pattern": {"type": "string", "description": "Filter pattern for log search"},
+                        "start_from_head": {"type": "boolean", "description": "Start from beginning of time range"}
+                    },
+                    "required": ["log_group_name"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "search_cloudwatch_logs",
+            "description": "Search CloudWatch logs for specific terms",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "log_group_name": {"type": "string", "description": "CloudWatch log group name"},
+                        "search_term": {"type": "string", "description": "Term to search for"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to search"},
+                        "max_events": {"type": "integer", "description": "Maximum number of events"},
+                        "log_stream_name": {"type": "string", "description": "Specific log stream name"}
+                    },
+                    "required": ["log_group_name", "search_term"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_cloudwatch_log_insights",
+            "description": "Run CloudWatch Logs Insights query",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "log_group_name": {"type": "string", "description": "CloudWatch log group name"},
+                        "query": {"type": "string", "description": "Logs Insights query string"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to query"},
+                        "max_results": {"type": "integer", "description": "Maximum number of results"}
+                    },
+                    "required": ["log_group_name", "query"]
+                }
+            }
+        }
+    },
+    
+    {
+        "toolSpec": {
+            "name": "get_ec2_logs",
+            "description": "Get or search EC2 logs for a specific instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "log_stream_name": {"type": "string", "description": "Specific log stream name"},
+                        "search_term": {"type": "string", "description": "Term to search for"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to search"},
+                        "max_events": {"type": "integer", "description": "Maximum number of events"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_ec2_log_streams",
+            "description": "Get all log streams for a specific EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_recent_ec2_errors",
+            "description": "Get recent error messages from EC2 instance logs",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to search"},
+                        "max_events": {"type": "integer", "description": "Maximum number of events"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "check_cloudwatch_agent_status",
+            "description": "Check if CloudWatch agent is configured for an EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+
+    {
+        "toolSpec": {
+            "name": "list_cloudwatch_alarms",
+            "description": "List CloudWatch alarms with optional filtering by state or name",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"},
+                        "state_value": {"type": "string", "description": "Filter by alarm state: OK, ALARM, INSUFFICIENT_DATA"},
+                        "alarm_name_prefix": {"type": "string", "description": "Filter by alarm name prefix"},
+                        "max_records": {"type": "integer", "description": "Maximum number of alarms to return"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_alarm_details",
+            "description": "Get detailed information about a specific CloudWatch alarm including history",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "alarm_name": {"type": "string", "description": "CloudWatch alarm name"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["alarm_name"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_alarms_in_alarm_state",
+            "description": "Get all CloudWatch alarms currently in ALARM state",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "set_alarm_state",
+            "description": "Manually set the state of a CloudWatch alarm (for testing purposes)",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "alarm_name": {"type": "string", "description": "CloudWatch alarm name"},
+                        "state_value": {"type": "string", "description": "New state: OK, ALARM, INSUFFICIENT_DATA"},
+                        "state_reason": {"type": "string", "description": "Reason for state change"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["alarm_name", "state_value", "state_reason"]
+                }
+            }
+        }
+    },
+
+    {
+        "toolSpec": {
+            "name": "list_cloudwatch_metrics",
+            "description": "List available CloudWatch metrics with optional filtering",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"},
+                        "namespace": {"type": "string", "description": "AWS namespace (e.g., AWS/EC2, AWS/RDS)"},
+                        "metric_name": {"type": "string", "description": "Specific metric name"},
+                        "dimensions": {"type": "string", "description": "JSON string of dimensions filter"},
+                        "max_results": {"type": "integer", "description": "Maximum number of metrics to return"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_metric_statistics",
+            "description": "Get statistical data for a specific CloudWatch metric",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "namespace": {"type": "string", "description": "AWS namespace (e.g., AWS/EC2)"},
+                        "metric_name": {"type": "string", "description": "Metric name (e.g., CPUUtilization)"},
+                        "dimensions": {"type": "string", "description": "JSON string of dimensions (e.g., '{\"InstanceId\": \"i-1234567890abcdef0\"}')"},
+                        "start_time_hours_ago": {"type": "integer", "description": "How many hours ago to start from"},
+                        "end_time_hours_ago": {"type": "integer", "description": "How many hours ago to end (0 = now)"},
+                        "period_seconds": {"type": "integer", "description": "Period in seconds (minimum 60)"},
+                        "statistics": {"type": "string", "description": "Statistic type: Average, Sum, SampleCount, Maximum, Minimum"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["namespace", "metric_name", "dimensions"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_ec2_cpu_metrics",
+            "description": "Get CPU utilization metrics for an EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to analyze"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_rds_cpu_metrics",
+            "description": "Get CPU utilization metrics for an RDS instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "db_instance_identifier": {"type": "string", "description": "RDS instance identifier"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to analyze"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["db_instance_identifier"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_ec2_instance_metrics_summary",
+            "description": "Get comprehensive metrics summary for an EC2 instance",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to analyze"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+
+    {
+        "toolSpec": {
+            "name": "list_cloudwatch_dashboards",
+            "description": "List all CloudWatch dashboards",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"}
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_dashboard_details",
+            "description": "Get detailed information about a CloudWatch dashboard",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "dashboard_name": {"type": "string", "description": "CloudWatch dashboard name"},
+                        "region": {"type": "string", "description": "AWS region"}
+                    },
+                    "required": ["dashboard_name"]
+                }
+            }
+        }
+    },
+
+    {
+        "toolSpec": {
+            "name": "health_check_ec2_instance",
+            "description": "Perform comprehensive health check for an EC2 instance using multiple data sources",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "instance_id": {"type": "string", "description": "EC2 instance ID"},
+                        "region": {"type": "string", "description": "AWS region"},
+                        "hours_back": {"type": "integer", "description": "How many hours back to analyze for health assessment"}
+                    },
+                    "required": ["instance_id"]
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_service_health_overview",
+            "description": "Get comprehensive health overview of AWS services in a region based on CloudWatch alarms",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {
+                        "region": {"type": "string", "description": "AWS region"}
+                    }
+                }
+            }
+        }
+    },
+    
+    {
+        "toolSpec": {
+            "name": "get_aws_regions",
+            "description": "Get list of available AWS regions",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {}
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "get_aws_account_info",
+            "description": "Get AWS account information and caller identity",
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "properties": {}
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+          "name": "get_maintenance_window_executions",
+          "description": "Get recent SSM Maintenance Window executions and their status",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "window_id": {"type": "string", "description": "Maintenance Window ID (optional)"},
+                "hours_back": {"type": "number", "description": "Hours to look back", "default": 24},
+                "region": {"type": "string", "description": "AWS region", "default": "us-east-1"}
+              }
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "get_patch_compliance_summary",
+          "description": "Get patch compliance summary for instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {"type": "string", "description": "Comma-separated instance IDs (optional)"},
+                "region": {"type": "string", "description": "AWS region", "default": "us-east-1"}
+              }
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "get_patch_operation_results",
+          "description": "Get detailed patch operation results for specific instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_id": {"type": "string", "description": "Instance ID"},
+                "operation_id": {"type": "string", "description": "Patch operation ID (optional)"},
+                "region": {"type": "string", "description": "AWS region", "default": "us-east-1"}
+              },
+              "required": ["instance_id"]
+            }
+          }
+        }
+    },
+    {
+        "toolSpec": {
+          "name": "get_detailed_maintenance_window_report",
+          "description": "Get comprehensive maintenance window execution report with package details",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "window_id": {
+                  "type": "string",
+                  "description": "Maintenance window ID"
+                },
+                "execution_id": {
+                  "type": "string",
+                  "description": "Optional specific execution ID"
+                },
+                "region": {
+                  "type": "string",
+                  "description": "AWS region (default: us-east-1)"
+                }
+              },
+              "required": ["window_id"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "get_patch_baseline_compliance",
+          "description": "Get patch baseline compliance across all instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "baseline_id": {
+                  "type": "string",
+                  "description": "Optional patch baseline ID"
+                },
+                "region": {
+                  "type": "string",
+                  "description": "AWS region"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "generate_patch_remediation_plan",
+          "description": "Generate a remediation plan for non-compliant instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "string",
+                  "description": "Comma-separated list of instance IDs"
+                },
+                "region": {
+                  "type": "string",
+                  "description": "AWS region"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "check_patch_status",
+          "description": "Check patch compliance status for EC2 instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of EC2 instance IDs to check"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "apply_patches",
+          "description": "Apply patches to EC2 instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs"
+                },
+                "operation": {
+                  "type": "string",
+                  "enum": ["Install", "Scan"],
+                  "description": "Patch operation type (default: Install)"
+                },
+                "reboot_option": {
+                  "type": "string",
+                  "enum": ["RebootIfNeeded", "NoReboot"],
+                  "description": "Reboot handling (default: RebootIfNeeded)"
+                },
+                "baseline_id": {
+                  "type": "string",
+                  "description": "Optional patch baseline ID"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "diagnose_patch_failures",
+          "description": "Diagnose patch installation failures with comprehensive checks",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs to diagnose"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "collect_system_info",
+          "description": "Collect comprehensive system information from instances",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "analyze_patch_logs",
+          "description": "Analyze system logs for patch-related issues",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs"
+                },
+                "log_type": {
+                  "type": "string",
+                  "enum": ["patch", "system"],
+                  "description": "Type of logs to analyze (default: patch)"
+                },
+                "hours_back": {
+                  "type": "integer",
+                  "description": "Hours to look back (default: 24)"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "repair_common_issues",
+          "description": "Attempt to repair common patch-related issues",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs"
+                },
+                "issue_type": {
+                  "type": "string",
+                  "enum": ["auto", "package_manager", "ssm_agent", "cleanup"],
+                  "description": "Type of repair to attempt (default: auto)"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "run_shell_command",
+          "description": "Run shell commands on EC2 instances via SSM",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs"
+                },
+                "commands": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "Shell commands to execute"
+                },
+                "working_directory": {
+                  "type": "string",
+                  "description": "Working directory (default: /tmp)"
+                },
+                "timeout_seconds": {
+                  "type": "integer",
+                  "description": "Command timeout in seconds (default: 1800)"
+                }
+              },
+              "required": ["instance_ids", "commands"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "get_patch_history",
+          "description": "Get patch installation history for instances over a specified time period",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "instance_ids": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of instance IDs"
+                },
+                "days_back": {
+                  "type": "integer",
+                  "description": "Number of days to look back (default: 30)"
+                }
+              },
+              "required": ["instance_ids"]
+            }
+          }
+        }
+      },
+      {
+        "toolSpec": {
+          "name": "get_maintenance_windows_detailed",
+          "description": "Get detailed maintenance window information including targets, tasks, and recent executions",
+          "inputSchema": {
+            "json": {
+              "type": "object",
+              "properties": {
+                "window_id": {
+                  "type": "string",
+                  "description": "Optional specific maintenance window ID"
+                }
+              }
+            }
+          }
+        }
+      }
+      
+]

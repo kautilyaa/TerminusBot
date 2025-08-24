@@ -1,0 +1,16 @@
+1096  python api_test.py
+ 1097  python api_test.py
+ 1098  python api_test.py
+ 1099  ls
+ 1100  export AWS_ACCESS_KEY_ID="ASIAXMVFDUALGJDYZN76"\nexport AWS_SECRET_ACCESS_KEY="TIL9dhYSLvkuz1Vt29loZxGLbwg2Gd9wD7fN+Kya"\nexport AWS_SESSION_TOKEN="IQoJb3JpZ2luX2VjEHEaCXVzLWVhc3QtMSJHMEUCICLsQWHpsB33UCkaq6V55AOMsAxwcq58/2ccDatwEhsqAiEAj60mE3c9GE6EY5ZJmG8RaknROLiX2+F7LZoBlnDMfSMqjAMIehAAGgw1MDgyMjYxNTA0MjIiDJy5nunKhHRjJ6PAOSrpAocR4xWX0T3Bm47LMUgnubMtppiV/nCtW9JVwgQKKJVCLkCQ5dJZL/fPWwIOlOShslEOZeGzSkpxbHi1FazeDRJxqialql/G2lp7OBg5GKwyY+tfP9ai6nLjxqvN3kt+albjaq5KjQ6HUngytFUsl1ArrxHo+0RiPvsAxOUUSR6n2w51qpg7fG0E+f7tJnsRyeJdXOL3FR1fxPAWeMuvZG/agA+thkKqWdkF8jWCbdcABpJeS05m/VLLZLAEfFnHnfGU4XbysVCjb4aOxBLBc0uoIPr1RWW9kezyqQmhoaFAGZpBBq/vdwCT4nYBS/pUYFSfYZihCESn4mLY3hXadCfoGosTcpKCYJ1lIP0Ug6B4n4t9AIXyrtTepD6NeSQifWlGDEES0J+PBrKjRihMk2+xS/DlmAAN8qJ+p0zcTejWKCX2LmXlu8QMW3mRC1rEMs+Aii66oNuaMaUN7wKNzJy3JuQZIy9s2z8w6PSvwwY6pgFkma8PhKyMTfmIvoNhC21Plcnp6A5BkGybUHur1HhR5MCrllkMvoBr8iR6XPSr4bN69AgfyQfN0v80m/3hv3TnNGhRLOEBOJlN3ydsqCRbaab3kDJAF0zaCFXaocUlde5btsLakRSVqA9lrqONHGBGQ6IcZULfhTQX0UTf96Eyu8dTsqNoIRTtoWTVoLW+lA6p/g2PuEwXzj4JXSOVlNu+JLZa3pW0"
+ 1101  aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 508226150422.dkr.ecr.us-east-1.amazonaws.com
+ 1102  docker buildx build --platform linux/amd64 -t  oncall-lambda2 . --load
+ 1103  docker tag oncall-lambda2:latest 508226150422.dkr.ecr.us-east-1.amazonaws.com/oncall-lambda2:latest
+ 1104  docker push 508226150422.dkr.ecr.us-east-1.amazonaws.com/oncall-lambda2:latest
+ 1105  aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 508226150422.dkr.ecr.us-east-1.amazonaws.com
+ 1106  docker buildx build --platform linux/amd64 -t  oncall-lambda2 . --load
+ 1107  docker tag oncall-lambda2:latest 508226150422.dkr.ecr.us-east-1.amazonaws.com/oncall-lambda2:latest
+ 1108  docker push 508226150422.dkr.ecr.us-east-1.amazonaws.com/oncall-lambda2:latest
+ 1109  pwd
+ 1110  open .
+ 1111  curl -N -H "Accept: text/event-stream" http://13.222.180.210:8002/sse/\n

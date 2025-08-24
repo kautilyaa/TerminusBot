@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: OS Patching Agent - EventBridge rules targeting existing oncall-lambda-2
+
+Resources:
+
+  ###########################################################################
+  # Rule 1: Maintenance Window Execution State-change Notification
+  ###########################################################################
+  SSMMwExecutionRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: os-patching-mw-exec
+      Description: SSM Maintenance Window execution state changes
+      EventPattern:
+        source:
+          - "aws.ssm"
+        detail-type:
+          - "Maintenance Window Execution State-change Notification"  # <-- fixed
+        detail:
+          status:
+            - "SUCCESS"
+            - "FAILED"
+            - "TIMED_OUT"
+            - "CANCELLED"
+            - "IN_PROGRESS"
+      State: ENABLED
+      Targets:
+        - Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:oncall-lambda-2
+          Id: PatchLambdaTargetMwExec
+
+  ###########################################################################
+  # Rule 2: SSM Run Command Status-change for patch docs
+  ###########################################################################
+  SSMRunCommandRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: os-patching-rc
+      Description: SSM Run Command status changes for patch operations
+      EventPattern:
+        source:
+          - "aws.ssm"
+        detail-type:
+          - "EC2 Command Status-change Notification"
+        detail:
+          document-name:
+            - prefix: "AWS-RunPatch"
+            - prefix: "AWS-Install"
+            - prefix: "AWS-Update"
+      State: ENABLED
+      Targets:
+        - Arn: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:oncall-lambda-2
+          Id: PatchLambdaTargetRunCmd
+
+  ###########################################################################
+  # Lambda Invoke Permissions (one per rule)
+  ###########################################################################
+  LambdaInvokeFromMwExec:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:oncall-lambda-2
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SSMMwExecutionRule.Arn
+
+  LambdaInvokeFromRunCmd:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:oncall-lambda-2
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SSMRunCommandRule.Arn
+
+  ###########################################################################
+  # SNS Topic (kept from your original stack)
+  ###########################################################################
+  PatchFailureAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: os-patching-alerts
+      DisplayName: OS Patching Failure Alerts
+
+Outputs:
+  MwExecRuleName:
+    Description: "EventBridge rule for MW execution state changes"
+    Value: !Ref SSMMwExecutionRule
+  RunCmdRuleName:
+    Description: "EventBridge rule for SSM Run Command status changes"
+    Value: !Ref SSMRunCommandRule
+  TargetLambdaArn:
+    Description: "Target Lambda used by both rules"
+    Value: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:oncall-lambda-2
+  SNSTopicArn:
+    Description: "SNS Topic ARN"
+    Value: !Ref PatchFailureAlertTopic

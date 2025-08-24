@@ -1,0 +1,47 @@
+{
+    "version": "0",
+    "id": "337a74cf-520f-0207-8828-778f51b16334",
+    "detail-type": "CloudWatch Alarm State Change",
+    "source": "aws.cloudwatch",
+    "account": "508226150422",
+    "time": "2025-06-16T15:14:28Z",
+    "region": "us-east-1",
+    "resources": [
+        "arn:aws:cloudwatch:us-east-1:508226150422:alarm:HighCPU-i-013a78013d438a78d"
+    ],
+    "detail": {
+        "alarmName": "HighCPU-i-013a78013d438a78d",
+        "state": {
+            "value": "ALARM",
+            "reason": "Threshold Crossed: 1 datapoint [0.2566571365596778 (16/06/25 15:09:00)] was greater than the threshold (0.0).",
+            "reasonData": "{\"version\":\"1.0\",\"queryDate\":\"2025-06-16T15:14:28.523+0000\",\"startDate\":\"2025-06-16T15:09:00.000+0000\",\"statistic\":\"Average\",\"period\":300,\"recentDatapoints\":[0.2566571365596778],\"threshold\":0.0,\"evaluatedDatapoints\":[{\"timestamp\":\"2025-06-16T15:09:00.000+0000\",\"sampleCount\":5.0,\"value\":0.2566571365596778}]}",
+            "timestamp": "2025-06-16T15:14:28.526+0000"
+        },
+        "previousState": {
+            "value": "INSUFFICIENT_DATA",
+            "reason": "Unchecked: Initial alarm creation",
+            "timestamp": "2025-06-16T15:13:44.404+0000"
+        },
+        "configuration": {
+            "metrics": [
+                {
+                    "id": "90cbbca6-d8ea-2175-89d7-b7c7176da89c",
+                    "metricStat": {
+                        "metric": {
+                            "namespace": "AWS/EC2",
+                            "name": "CPUUtilization",
+                            "dimensions": {
+                                "InstanceId": "i-013a78013d438a78d"
+                            }
+                        }, 
+                        "period": 300,
+                        "stat": "Average"
+                    },
+                    "returnData": true
+                }
+            ],
+            "description": "Alarm when EC2 CPU > 0%"
+        }
+        
+    }
+}

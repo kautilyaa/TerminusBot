@@ -1,0 +1,1136 @@
+Yes, the current implementation can get lists of installed and failed packages, but it could be more detailed. Let me show you what's currently available and suggest an enhancement:
+
+## **Current Capability:**
+
+The `_get_patch_operation_results` method currently returns:
+```python
+patches = []
+for patch in patch_response.get('Patches', []):
+    patches.append({
+        'Title': patch.get('Title', 'N/A'),
+        'KBId': patch.get('KBId', 'N/A'),
+        'Classification': patch.get('Classification', 'N/A'),
+        'Severity': patch.get('Severity', 'N/A'),
+        'State': patch.get('State', 'N/A'),  # ← This shows INSTALLED, FAILED, etc.
+        'InstalledTime': patch.get('InstalledTime', '').isoformat() if patch.get('InstalledTime') else 'N/A'
+    })
+```
+
+## **Enhanced Version for Better Package Details:**
+
+Here's an improved version that clearly separates successful and failed packages:
+
+```python
+def _get_patch_operation_results(self, instance_id: str, operation_id: Optional[str] = None, 
+                                region: str = "us-east-1") -> str:
+    """Get detailed patch operation results with success/failure breakdown"""
+    try:
+        ssm = boto3.client('ssm', region_name=region)
+        
+        # Get patch history for the instance
+        response = ssm.describe_instance_patch_states(
+            InstanceIds=[instance_id]
+        )
+        
+        if not response.get('InstancePatchStates'):
+            return self._safe_json_response(False, error="No patch state found for instance", instance_id=instance_id)
+        
+        patch_state = response['InstancePatchStates'][0]
+        
+        # Get detailed patch results with pagination
+        all_patches = []
+        next_token = None
+        
+        while True:
+            params = {
+                'InstanceId': instance_id,
+                'MaxResults': 100
+            }
+            if next_token:
+                params['NextToken'] = next_token
+                
+            patch_response = ssm.describe_instance_patches(**params)
+            all_patches.extend(patch_response.get('Patches', []))
+            
+            next_token = patch_response.get('NextToken')
+            if not next_token:
+                break
+        
+        # Categorize patches by state
+        successful_patches = []
+        failed_patches = []
+        installed_pending_reboot = []
+        missing_patches = []
+        not_applicable = []
+        
+        for patch in all_patches:
+            patch_info = {
+                'Title': patch.get('Title', 'N/A'),
+                'KBId': patch.get('KBId', 'N/A'),
+                'CVEIds': patch.get('CVEIds', []),  # Security CVEs if applicable
+                'Classification': patch.get('Classification', 'N/A'),
+                'Severity': patch.get('Severity', 'N/A'),
+                'State': patch.get('State', 'N/A'),
+                'InstalledTime': patch.get('InstalledTime', '').isoformat() if patch.get('InstalledTime') else None,
+                'Version': patch.get('Version', 'N/A'),  # Package version
+            }
+            
+            state = patch.get('State', '')
+            
+            if state == 'INSTALLED':
+                successful_patches.append(patch_info)
+            elif state == 'FAILED':
+                # Try to get failure reason
+                patch_info['FailureReason'] = patch.get('FailureReason', 'Unknown')
+                failed_patches.append(patch_info)
+            elif state == 'INSTALLED_PENDING_REBOOT':
+                installed_pending_reboot.append(patch_info)
+            elif state == 'MISSING':
+                missing_patches.append(patch_info)
+            elif state == 'NOT_APPLICABLE':
+                not_applicable.append(patch_info)
+        
+        # Get command invocation details if operation_id provided
+        command_details = None
+        command_output = None
+        
+        if operation_id:
+            try:
+                cmd_response = ssm.get_command_invocation(
+                    CommandId=operation_id,
+                    InstanceId=instance_id
+                )
+                
+                # Parse the actual package manager output
+                output = cmd_response.get('StandardOutputContent', '')
+                error_output = cmd_response.get('StandardErrorContent', '')
+                
+                # Extract package names from output (for Linux systems)
+                installed_packages = []
+                failed_packages = []
+                
+                # Common patterns for different package managers
+                if 'yum' in output.lower() or 'dnf' in output.lower():
+                    # Parse yum/dnf output
+                    for line in output.split('\n'):
+                        if 'Installed:' in line:
+                            installed_packages.append(line.strip())
+                        elif 'Failed:' in line or 'Error:' in line:
+                            failed_packages.append(line.strip())
+                elif 'apt' in output.lower():
+                    # Parse apt output
+                    for line in output.split('\n'):
+                        if 'Setting up' in line or 'Unpacking' in line:
+                            installed_packages.append(line.strip())
+                        elif 'E:' in line or 'Err:' in line:
+                            failed_packages.append(line.strip())
+                
+                command_details = {
+                    'CommandId': cmd_response['CommandId'],
+                    'Status': cmd_response['Status'],
+                    'StatusDetails': cmd_response.get('StatusDetails', ''),
+                    'ExecutionEndTime': cmd_response.get('ExecutionEndDateTime', '').isoformat() if cmd_response.get('ExecutionEndDateTime') else None,
+                    'InstalledPackages': installed_packages[:20],  # First 20 to avoid huge response
+                    'FailedPackages': failed_packages,
+                    'StandardOutput': output[:2000] if output else 'No output',  # First 2000 chars
+                    'StandardError': error_output[:1000] if error_output else 'No errors'
+                }
+            except Exception as e:
+                logger.warning(f"Could not get command details: {e}")
+        
+        # Generate summary statistics
+        summary = {
+            'TotalPatches': len(all_patches),
+            'SuccessfullyInstalled': len(successful_patches),
+            'Failed': len(failed_patches),
+            'PendingReboot': len(installed_pending_reboot),
+            'Missing': len(missing_patches),
+            'NotApplicable': len(not_applicable),
+            'SuccessRate': f"{(len(successful_patches) / len(all_patches) * 100):.1f}%" if all_patches else "0%"
+        }
+        
+        return self._safe_json_response(
+            True,
+            instanceId=instance_id,
+            summary=summary,
+            patchState={
+                'OperationStartTime': patch_state.get('OperationStartTime', '').isoformat() if patch_state.get('OperationStartTime') else 'N/A',
+                'OperationEndTime': patch_state.get('OperationEndTime', '').isoformat() if patch_state.get('OperationEndTime') else 'N/A',
+                'Operation': patch_state.get('Operation', 'N/A'),
+                'RebootOption': patch_state.get('RebootOption', 'N/A'),
+                'LastNoRebootInstallOperationTime': patch_state.get('LastNoRebootInstallOperationTime', '').isoformat() if patch_state.get('LastNoRebootInstallOperationTime') else None
+            },
+            successfulPatches=successful_patches[:50],  # Limit to avoid huge responses
+            failedPatches=failed_patches,  # All failed patches (usually fewer)
+            installedPendingReboot=installed_pending_reboot,
+            missingPatches=missing_patches[:20],  # First 20 missing
+            commandDetails=command_details
+        )
+    except Exception as e:
+        return self._handle_aws_error("get_patch_operation_results", e, instance_id=instance_id)
+```
+
+## **Additional Enhancement - Get Package-Level Details:**
+
+Add this new method for Linux package-level details:
+
+```python
+def _get_installed_packages_via_ssm(self, instance_id: str, region: str = "us-east-1") -> str:
+    """Get list of installed packages directly from the system"""
+    try:
+        # Detect OS and run appropriate command
+        commands = [
+            "# Detect OS and list packages",
+            "if [ -f /etc/redhat-release ]; then",
+            "  echo '=== YUM/DNF PACKAGES ==='",
+            "  rpm -qa --last | head -50",  # Last 50 installed packages
+            "  echo '=== RECENT YUM HISTORY ==='",
+            "  yum history list | head -10",
+            "elif [ -f /etc/debian_version ]; then",
+            "  echo '=== APT PACKAGES ==='",
+            "  grep ' install ' /var/log/dpkg.log | tail -50",
+            "  echo '=== RECENT APT HISTORY ==='",
+            "  grep -E '(upgrade|install)' /var/log/apt/history.log | tail -20",
+            "elif [ -f /etc/alpine-release ]; then",
+            "  echo '=== APK PACKAGES ==='",
+            "  apk list --installed | tail -50",
+            "else",
+            "  echo 'Unknown OS distribution'",
+            "  uname -a",
+            "fi"
+        ]
+        
+        result = self._run_ssm_command(
+            instance_id,
+            '\\n'.join(commands),
+            region,
+            wait_for_completion=True,
+            max_wait_time=60
+        )
+        
+        return result
+        
+    except Exception as e:
+        return self._handle_aws_error("get_installed_packages_via_ssm", e, instance_id=instance_id)
+```
+
+## **Usage Benefits:**
+
+With these enhancements, you can:
+
+1. **Get categorized patch lists:**
+   - Successfully installed patches
+   - Failed patches with reasons
+   - Patches pending reboot
+   - Missing patches
+
+2. **Get package-level details:**
+   - Actual package names and versions
+   - Installation timestamps
+   - Failure reasons
+
+3. **Get command output:**
+   - Raw output from yum/apt/dnf
+   - Error messages
+   - Installation logs
+
+## **Example Response Structure:**
+
+```json
+{
+  "success": true,
+  "instanceId": "i-1234567890",
+  "summary": {
+    "TotalPatches": 45,
+    "SuccessfullyInstalled": 40,
+    "Failed": 2,
+    "PendingReboot": 3,
+    "SuccessRate": "88.9%"
+  },
+  "successfulPatches": [
+    {
+      "Title": "kernel-5.10.201-191.748.amzn2.x86_64",
+      "State": "INSTALLED",
+      "InstalledTime": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "failedPatches": [
+    {
+      "Title": "docker-24.0.5-1.amzn2",
+      "State": "FAILED",
+      "FailureReason": "Dependency conflict"
+    }
+  ]
+}
+```
+
+This gives you complete visibility into what succeeded and what failed!
+
+
+# def lambda_handler(event, context):
+#     """Lambda handler optimized for Slack Events API with mentions and slash commands"""
+#     request_id = context.aws_request_id
+#     logger.info(f"Lambda invocation started - RequestID: {request_id}")
+    
+#     # Log memory and time limits
+#     logger.info(f"Memory allocated: {context.memory_limit_in_mb}MB, " +
+#                f"Time remaining: {context.get_remaining_time_in_millis()/1000:.2f}s")
+
+#     # ============================================
+#     # ASYNC PROCESSING CHECK (SELF-INVOCATION)
+#     # ============================================
+#     # Check if this is a self-invoked async processing request
+#     if event.get('_async_processing'):
+#         logger.info("Processing async request from self-invocation")
+        
+#         try:
+#             # Extract the saved event details
+#             process_type = event.get('process_type')
+            
+#             if process_type == 'app_mention':
+#                 # Process app mention asynchronously
+#                 text = event['text']
+#                 channel = event['channel']
+#                 user = event['user']
+#                 thread_ts = event['thread_ts']
+#                 region = event.get('region', 'us-east-1')
+                
+#                 # Send initial "processing" message
+#                 send_slack_message_with_thread(
+#                     channel, 
+#                     "🤔 Processing your request...", 
+#                     thread_ts
+#                 )
+                
+#                 # Create client and process the query
+#                 client = AWSMCPLambdaClient(region=region)
+#                 session_id = get_session_id(user, channel, thread_ts)
+                
+#                 # Process based on query type
+#                 if text.lower() in ['hello', 'hi', 'hey', 'test']:
+#                     response_text = "👋 Hello! I'm your AWS Operations Assistant. How can I help you today?"
+#                 else:
+#                     result = client.process_query_with_context(text, session_id)
+#                     response_text = result.get('response', 'I encountered an error processing your request.')
+                
+#                 # Send the actual response
+#                 send_slack_message_with_thread(channel, response_text, thread_ts)
+#                 client.cleanup()
+                
+#             elif process_type == 'slash_command':
+#                 # Process slash command asynchronously (for long-running queries)
+#                 command = event['command']
+#                 text = event['text']
+#                 user_id = event['user_id']
+#                 channel_id = event['channel_id']
+#                 response_url = event.get('response_url')
+#                 region = event.get('region', 'us-east-1')
+                
+#                 # Process the command
+#                 client = AWSMCPLambdaClient(region=region)
+#                 session_id = get_session_id(user_id, channel_id)
+#                 result = client.process_query_with_context(text, session_id)
+#                 response_text = result.get('response', 'Error processing request.')
+                
+#                 # Send response via response_url if available
+#                 if response_url:
+#                     try:
+#                         requests.post(response_url, json={
+#                             'response_type': 'in_channel',
+#                             'text': response_text
+#                         }, timeout=5)
+#                     except Exception as e:
+#                         logger.error(f"Failed to send to response_url: {e}")
+                
+#                 client.cleanup()
+            
+#             logger.info("Async processing completed successfully")
+#             return {
+#                 'statusCode': 200,
+#                 'body': json.dumps({'async_processed': True, 'success': True})
+#             }
+            
+#         except Exception as e:
+#             logger.error(f"Error in async processing: {e}", exc_info=True)
+            
+#             # Try to send error message to Slack
+#             try:
+#                 if event.get('channel') and event.get('thread_ts'):
+#                     send_slack_message_with_thread(
+#                         event['channel'], 
+#                         f"❌ Sorry, I encountered an error: {str(e)}", 
+#                         event.get('thread_ts')
+#                     )
+#             except:
+#                 logger.error("Could not send error message to Slack")
+            
+#             return {
+#                 'statusCode': 500,
+#                 'body': json.dumps({'async_processed': True, 'error': str(e)})
+#             }
+    
+#     # ============================================
+#     # NORMAL EVENT PROCESSING
+#     # ============================================
+    
+#     # Log the entire event for debugging (truncated)
+#     event_str = json.dumps(event)
+#     logger.info(f"Received event: {event_str[:1000]}...")
+
+#     start_time = time.time()
+
+#     try:
+#         # Detect event source
+#         event_source = detect_event_source(event)
+#         logger.info(f"Detected event source: {event_source}")
+
+#         # Handle different event sources
+#         if event_source == 'slack':
+#             # Check headers
+#             headers = event.get('headers', {})
+#             content_type = headers.get('Content-Type', headers.get('content-type', ''))
+
+#             # Verify Slack signature if present
+#             slack_signing_secret = os.environ.get('SLACK_SIGNING_SECRET')
+
+#             if slack_signing_secret and not verify_slack_request(event, slack_signing_secret):
+#                 logger.warning("Slack request verification failed")
+#                 return {
+#                     'statusCode': 401,
+#                     'headers': {'Content-Type': 'application/json'},
+#                     'body': json.dumps({'error': 'Unauthorized'})
+#                 }
+
+#             # Handle Events API (JSON)
+#             if content_type == 'application/json' or (not content_type and event.get('body', '').strip().startswith('{')):
+#                 logger.info("Processing Slack Events API request")
+
+#                 # Parse event body
+#                 body_str = event.get('body', '')
+#                 if event.get('isBase64Encoded'):
+#                     body_str = base64.b64decode(body_str).decode('utf-8')
+
+#                 body = json.loads(body_str) if isinstance(body_str, str) else body_str
+
+#                 # Handle URL verification challenge
+#                 if body.get('type') == 'url_verification':
+#                     logger.info(f"Handling Slack URL verification challenge: {body.get('challenge')}")
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {
+#                             'Content-Type': 'text/plain',
+#                             'X-Content-Type-Options': 'nosniff'
+#                         },
+#                         'body': body.get('challenge', ''),
+#                         'isBase64Encoded': False
+#                     }
+
+#                 # Check for duplicate events EARLY
+#                 event_hash = get_event_hash(body)
+#                 if is_duplicate_event(event_hash):
+#                     logger.info(f"Skipping duplicate event: {event_hash}")
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {'Content-Type': 'application/json'},
+#                         'body': json.dumps({'ok': True, 'duplicate': True})
+#                     }
+
+#                 # Handle event callbacks
+#                 if body.get('type') == 'event_callback':
+#                     logger.info("Processing event callback")
+
+#                     # Extract event details
+#                     slack_event = body.get('event', {})
+#                     event_type = slack_event.get('type')
+
+#                     # Skip bot messages to prevent loops
+#                     if slack_event.get('bot_id') or slack_event.get('subtype') == 'bot_message':
+#                         logger.info("Ignoring bot message")
+#                         return {
+#                             'statusCode': 200,
+#                             'headers': {'Content-Type': 'application/json'},
+#                             'body': json.dumps({'ok': True})
+#                         }
+
+#                     # Handle app_mention events
+#                     if event_type == 'app_mention':
+#                         logger.info("Processing app mention")
+                        
+#                         # Extract mention details
+#                         text = slack_event.get('text', '')
+#                         channel = slack_event.get('channel')
+#                         user = slack_event.get('user')
+#                         thread_ts = slack_event.get('thread_ts', slack_event.get('ts'))
+                        
+#                         # Skip bot messages
+#                         if slack_event.get('bot_id'):
+#                             logger.info("Ignoring bot message")
+#                             return {
+#                                 'statusCode': 200,
+#                                 'headers': {'Content-Type': 'application/json'},
+#                                 'body': json.dumps({'ok': True, 'bot_message': True})
+#                             }
+                        
+#                         # Remove bot mention from text
+#                         clean_text = re.sub(r'<@[A-Z0-9]+>', '', text).strip()
+                        
+#                         if clean_text:
+#                             # Check if this is a duplicate using event timestamp
+#                             event_key = f"mention_{slack_event.get('ts')}_{user}"
+#                             if is_duplicate_event(event_key):
+#                                 logger.info(f"Skipping duplicate mention: {event_key}")
+#                                 return {
+#                                     'statusCode': 200,
+#                                     'headers': {'Content-Type': 'application/json'},
+#                                     'body': json.dumps({'ok': True, 'duplicate': True})
+#                                 }
+                            
+#                             logger.info(f"Triggering async processing for: '{clean_text[:50]}...'")
+                            
+#                             # Invoke this Lambda asynchronously
+#                             try:
+#                                 import boto3
+#                                 lambda_client = boto3.client('lambda')
+                                
+#                                 async_payload = {
+#                                     '_async_processing': True,  # Flag for async processing
+#                                     'process_type': 'app_mention',
+#                                     'text': clean_text,
+#                                     'channel': channel,
+#                                     'user': user,
+#                                     'thread_ts': thread_ts,
+#                                     'region': os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+#                                 }
+                                
+#                                 lambda_client.invoke(
+#                                     FunctionName=context.function_name,
+#                                     InvocationType='Event',  # Async - fire and forget
+#                                     Payload=json.dumps(async_payload)
+#                                 )
+                                
+#                                 logger.info("Successfully triggered async processing")
+                                
+#                             except Exception as e:
+#                                 logger.error(f"Failed to trigger async processing: {e}")
+#                                 # Still return 200 to prevent Slack retries
+                        
+#                         # IMMEDIATELY return 200 to Slack
+#                         return {
+#                             'statusCode': 200,
+#                             'headers': {'Content-Type': 'application/json'},
+#                             'body': json.dumps({'ok': True, 'acknowledged': True})
+#                         }
+
+#             # Handle Slash Commands (URL-encoded)
+#             elif content_type.startswith('application/x-www-form-urlencoded'):
+#                 logger.info("Processing Slack slash command")
+
+#                 # Parse URL-encoded body
+#                 body = parse_slack_request(event)
+
+#                 # Extract parameters
+#                 command = body.get('command', '')
+#                 text = body.get('text', '')
+#                 channel_id = body.get('channel_id', '')
+#                 user_id = body.get('user_id', '')
+#                 response_url = body.get('response_url', '')
+
+#                 logger.info(f"Slash command details - Command: {command}, Text: {text}, User: {user_id}")
+
+#                 try:
+#                     # Create client for simple commands
+#                     region = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+#                     client = AWSMCPLambdaClient(region=region)
+
+#                     # Process commands
+#                     response_text = ""
+                    
+#                     # Handle simple/quick commands synchronously
+#                     if command in ['/aws_help', '/bot_status', '/test', '/show_context',
+#                                   '/set_context', '/clear_context', '/clear_memory']:
+#                         logger.info(f"Handling built-in command: {command}")
+#                         result = handle_slash_command(command, text, user_id, channel_id, client)
+#                         response_text = result.get('response', 'Command processed.')
+                        
+#                         # Clean up
+#                         client.cleanup()
+                        
+#                         # Return immediate response for simple commands
+#                         return {
+#                             'statusCode': 200,
+#                             'headers': {'Content-Type': 'application/json'},
+#                             'body': json.dumps({
+#                                 'response_type': 'in_channel',
+#                                 'text': response_text
+#                             })
+#                         }
+                        
+#                     elif command == '/aws':
+#                         # Handle /aws command
+#                         if not text:
+#                             response_text = "Please provide a query. Example: `/aws list all EC2 instances`"
+#                             return {
+#                                 'statusCode': 200,
+#                                 'headers': {'Content-Type': 'application/json'},
+#                                 'body': json.dumps({
+#                                     'response_type': 'ephemeral',
+#                                     'text': response_text
+#                                 })
+#                             }
+#                         else:
+#                             # For potentially long queries, process async
+#                             logger.info(f"Processing AWS query asynchronously: {text}")
+                            
+#                             try:
+#                                 import boto3
+#                                 lambda_client = boto3.client('lambda')
+                                
+#                                 async_payload = {
+#                                     '_async_processing': True,
+#                                     'process_type': 'slash_command',
+#                                     'command': command,
+#                                     'text': text,
+#                                     'user_id': user_id,
+#                                     'channel_id': channel_id,
+#                                     'response_url': response_url,
+#                                     'region': os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+#                                 }
+                                
+#                                 lambda_client.invoke(
+#                                     FunctionName=context.function_name,
+#                                     InvocationType='Event',
+#                                     Payload=json.dumps(async_payload)
+#                                 )
+                                
+#                                 # Return immediate acknowledgment
+#                                 return {
+#                                     'statusCode': 200,
+#                                     'headers': {'Content-Type': 'application/json'},
+#                                     'body': json.dumps({
+#                                         'response_type': 'ephemeral',
+#                                         'text': '🤔 Processing your AWS query. Response will appear shortly...'
+#                                     })
+#                                 }
+                                
+#                             except Exception as e:
+#                                 logger.error(f"Failed to trigger async: {e}")
+#                                 return {
+#                                     'statusCode': 200,
+#                                     'headers': {'Content-Type': 'application/json'},
+#                                     'body': json.dumps({
+#                                         'response_type': 'ephemeral',
+#                                         'text': f'❌ Error: {str(e)}'
+#                                     })
+#                                 }
+#                     else:
+#                         # Unknown command
+#                         response_text = f"Unknown command: {command}. Use `/aws_help` for available commands."
+#                         return {
+#                             'statusCode': 200,
+#                             'headers': {'Content-Type': 'application/json'},
+#                             'body': json.dumps({
+#                                 'response_type': 'ephemeral',
+#                                 'text': response_text
+#                             })
+#                         }
+
+#                 except Exception as e:
+#                     logger.error(f"Error processing slash command: {e}", exc_info=True)
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {'Content-Type': 'application/json'},
+#                         'body': json.dumps({
+#                             'response_type': 'ephemeral',
+#                             'text': f"❌ Error: {str(e)}"
+#                         })
+#                     }
+
+#         else:
+#             # Handle non-Slack events (API Gateway, EventBridge, SNS, etc.)
+#             logger.warning(f"Non-Slack event source: {event_source}")
+#             return {
+#                 'statusCode': 400,
+#                 'body': json.dumps({'error': f'Event source {event_source} not fully implemented'})
+#             }
+
+#     except Exception as e:
+#         execution_time = time.time() - start_time
+#         logger.error(f"Internal server error: {str(e)}", exc_info=True)
+
+#         return {
+#             'statusCode': 500,
+#             'headers': {'Content-Type': 'application/json'},
+#             'body': json.dumps({
+#                 'error': f'Internal server error: {str(e)}',
+#                 'execution_time_seconds': execution_time,
+#                 'request_id': request_id
+#             })
+#         }
+
+# def lambda_handler(event, context):
+#     """Lambda handler optimized for Slack Events API with mentions and slash commands"""
+#     request_id = context.aws_request_id
+#     logger.info(f"Lambda invocation started - RequestID: {request_id}")
+    
+#     # Log memory and time limits
+#     logger.info(f"Memory allocated: {context.memory_limit_in_mb}MB, " +
+#                f"Time remaining: {context.get_remaining_time_in_millis()/1000:.2f}s")
+
+#     # Log the entire event for debugging (truncated)
+#     event_str = json.dumps(event)
+#     logger.info(f"Received event: {event_str[:1000]}...")
+
+#     start_time = time.time()
+
+#     try:
+#         # Detect event source
+#         event_source = detect_event_source(event)
+#         logger.info(f"Detected event source: {event_source}")
+
+#         # Handle different event sources
+#         if event_source == 'slack':
+#             # Check headers
+#             headers = event.get('headers', {})
+#             content_type = headers.get('Content-Type', headers.get('content-type', ''))
+
+#             # Verify Slack signature if present
+#             slack_signing_secret = os.environ.get('SLACK_SIGNING_SECRET')
+
+#             if slack_signing_secret and not verify_slack_request(event, slack_signing_secret):
+#                 logger.warning("Slack request verification failed")
+#                 return {
+#                     'statusCode': 401,
+#                     'headers': {'Content-Type': 'application/json'},
+#                     'body': json.dumps({'error': 'Unauthorized'})
+#                 }
+
+#             # Handle Events API (JSON)
+#             if content_type == 'application/json' or (not content_type and event.get('body', '').strip().startswith('{')):
+#                 logger.info("Processing Slack Events API request")
+
+#                 # Parse event body
+#                 body_str = event.get('body', '')
+#                 if event.get('isBase64Encoded'):
+#                     body_str = base64.b64decode(body_str).decode('utf-8')
+
+#                 body = json.loads(body_str) if isinstance(body_str, str) else body_str
+
+#                 # Handle URL verification challenge
+#                 if body.get('type') == 'url_verification':
+#                     logger.info(f"Handling Slack URL verification challenge: {body.get('challenge')}")
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {
+#                             'Content-Type': 'text/plain',
+#                             'X-Content-Type-Options': 'nosniff'
+#                         },
+#                         'body': body.get('challenge', ''),
+#                         'isBase64Encoded': False
+#                     }
+
+#                 # Check for duplicate events EARLY
+#                 event_hash = get_event_hash(body)
+#                 if is_duplicate_event(event_hash):
+#                     logger.info(f"Skipping duplicate event: {event_hash}")
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {'Content-Type': 'application/json'},
+#                         'body': json.dumps({'ok': True, 'duplicate': True})
+#                     }
+
+#                 # Handle event callbacks
+#                 if body.get('type') == 'event_callback':
+#                     logger.info("Processing event callback")
+
+#                     # Extract event details
+#                     slack_event = body.get('event', {})
+#                     event_type = slack_event.get('type')
+
+#                     # Skip bot messages to prevent loops
+#                     if slack_event.get('bot_id') or slack_event.get('subtype') == 'bot_message':
+#                         logger.info("Ignoring bot message")
+#                         return {
+#                             'statusCode': 200,
+#                             'headers': {'Content-Type': 'application/json'},
+#                             'body': json.dumps({'ok': True})
+#                         }
+
+#                     # Skip app_mention events that are actually message edits
+#                     # if event_type == 'app_mention' and slack_event.get('subtype') == 'message_changed':
+#                     #     logger.info("Ignoring message edit")
+#                     #     return {
+#                     #         'statusCode': 200,
+#                     #         'headers': {'Content-Type': 'application/json'},
+#                     #         'body': json.dumps({'ok': True})
+#                     #     }
+
+#                     # # Handle app_mention events
+#                     # if event_type == 'app_mention':
+#                     #     logger.info("Processing app mention")
+                        
+#                     #     # Extract event details first
+#                     #     text = slack_event.get('text', '')
+#                     #     channel = slack_event.get('channel')
+#                     #     user = slack_event.get('user')
+#                     #     thread_ts = slack_event.get('thread_ts', slack_event.get('ts'))
+                        
+#                     #     # IMMEDIATELY return success to Slack (within 3 seconds)
+#                     #     # This prevents retries
+#                     #     if text and not slack_event.get('bot_id'):
+#                     #         # Start a thread to process in background
+#                     #         import threading
+                            
+#                     #         def process_async():
+#                     #             try:
+#                     #                 # Remove bot mention
+#                     #                 clean_text = re.sub(r'<@[A-Z0-9]+>', '', text).strip()
+                                    
+#                     #                 # Send "thinking" message
+#                     #                 send_slack_message_with_thread(
+#                     #                     channel, 
+#                     #                     "🤔 Processing your request...", 
+#                     #                     thread_ts
+#                     #                 )
+                                    
+#                     #                 # Process the actual query
+#                     #                 client = AWSMCPLambdaClient(region=region)
+#                     #                 session_id = get_session_id(user, channel, thread_ts)
+#                     #                 result = client.process_query_with_context(clean_text, session_id)
+#                     #                 response_text = result.get('response', 'Error occurred')
+                                    
+#                     #                 # Send the actual response
+#                     #                 send_slack_message_with_thread(channel, response_text, thread_ts)
+#                     #                 client.cleanup()
+                                    
+#                     #             except Exception as e:
+#                     #                 logger.error(f"Error in async processing: {e}")
+#                     #                 send_slack_message_with_thread(
+#                     #                     channel, 
+#                     #                     f"❌ Error: {str(e)}", 
+#                     #                     thread_ts
+#                     #                 )
+                            
+#                     #         # Start processing in background
+#                     #         thread = threading.Thread(target=process_async)
+#                     #         thread.daemon = True
+#                     #         thread.start()
+                        
+#                     #     # Return immediately to prevent Slack retries
+#                     #     return {
+#                     #         'statusCode': 200,
+#                     #         'headers': {'Content-Type': 'application/json'},
+#                     #         'body': json.dumps({'ok': True})
+#                     #     }
+
+
+#                     if event_type == 'app_mention':
+                        
+#                         logger.info("Processing app mention")
+                        
+#                         # Extract mention details
+#                         text = slack_event.get('text', '')
+#                         channel = slack_event.get('channel')
+#                         user = slack_event.get('user')
+#                         thread_ts = slack_event.get('thread_ts', slack_event.get('ts'))
+                        
+#                         # Remove bot mention from text
+#                         text = re.sub(r'<@[A-Z0-9]+>', '', text).strip()
+
+#                         response_text = "👋 Hello! I'm Processing your request..."
+#                         send_slack_message_with_thread(channel, response_text, thread_ts)
+#                         if text:
+#                             logger.info(f"Processing mention text: '{text}'")
+                            
+#                             try:
+#                                 # Create client
+#                                 region = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+#                                 client = AWSMCPLambdaClient(region=region)
+                                
+#                                 # Process the query
+#                                 if text.lower() in ['hello', 'hi', 'hey', 'test']:
+#                                     response_text = "👋 Hello! I'm your AWS Operations Assistant. How can I help you today?"
+#                                 else:
+#                                     # Process complex queries
+#                                     session_id = get_session_id(user, channel, thread_ts)
+#                                     result = client.process_query_with_context(text, session_id)
+                                    
+#                                     # Get the response - it's already formatted for Slack by Claude
+#                                     response_text = result.get('response', 'I encountered an error processing your request.')
+                                
+#                                 # Send directly without any formatting
+#                                 send_slack_message_with_thread(channel, response_text, thread_ts)
+                                
+#                                 # Clean up
+#                                 client.cleanup()
+                                
+#                             except Exception as e:
+#                                 logger.error(f"Error processing mention: {e}", exc_info=True)
+#                                 try:
+#                                     send_slack_message_with_thread(
+#                                         channel, 
+#                                         f"❌ Sorry, I encountered an error: {str(e)}", 
+#                                         thread_ts
+#                                     )
+#                                 except:
+#                                     pass
+                        
+#                         # Always return success to Slack immediately
+#                         return {
+#                             'statusCode': 200,
+#                             'headers': {'Content-Type': 'application/json'},
+#                             'body': json.dumps({'ok': True})
+#                         }
+
+#             # Handle Slash Commands (URL-encoded)
+#             elif content_type.startswith('application/x-www-form-urlencoded'):
+#                 logger.info("Processing Slack slash command")
+
+#                 # Parse URL-encoded body
+#                 body = parse_slack_request(event)
+
+#                 # Extract parameters
+#                 command = body.get('command', '')
+#                 text = body.get('text', '')
+#                 channel_id = body.get('channel_id', '')
+#                 user_id = body.get('user_id', '')
+#                 response_url = body.get('response_url', '')
+
+#                 logger.info(f"Slash command details - Command: {command}, Text: {text}, User: {user_id}")
+
+#                 try:
+#                     # Create client
+#                     region = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
+#                     client = AWSMCPLambdaClient(region=region)
+
+#                     # Process commands synchronously for immediate response
+#                     response_text = ""
+                    
+#                     if command in ['/aws_help', '/bot_status', '/test', '/show_context',
+#                                   '/set_context', '/clear_context', '/clear_memory']:
+#                         logger.info(f"Handling built-in command: {command}")
+#                         result = handle_slash_command(command, text, user_id, channel_id, client)
+#                         response_text = result.get('response', 'Command processed.')
+                        
+#                     elif command == '/aws':
+#                         # Handle /aws command - treat text as query
+#                         if not text:
+#                             response_text = "Please provide a query. Example: `/aws list all EC2 instances`"
+#                         else:
+#                             logger.info(f"Processing AWS query: {text}")
+#                             session_id = get_session_id(user_id, channel_id)
+#                             result = client.process_query_with_context(text, session_id)
+#                             response_text = result.get('response', 'I encountered an error processing your request.')
+#                     else:
+#                         # Unknown command
+#                         response_text = f"Unknown command: {command}. Use `/aws_help` for available commands."
+
+#                     # Clean up
+#                     client.cleanup()
+
+#                     # Return response
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {'Content-Type': 'application/json'},
+#                         'body': json.dumps({
+#                             'response_type': 'in_channel',
+#                             'text': response_text
+#                         })
+#                     }
+
+#                 except Exception as e:
+#                     logger.error(f"Error processing slash command: {e}", exc_info=True)
+#                     return {
+#                         'statusCode': 200,
+#                         'headers': {'Content-Type': 'application/json'},
+#                         'body': json.dumps({
+#                             'response_type': 'ephemeral',
+#                             'text': f"❌ Error: {str(e)}"
+#                         })
+#                     }
+
+#         else:
+#             # Handle non-Slack events (API Gateway, EventBridge, SNS, etc.)
+#             logger.warning(f"Non-Slack event source: {event_source}")
+#             return {
+#                 'statusCode': 400,
+#                 'body': json.dumps({'error': f'Event source {event_source} not fully implemented'})
+#             }
+
+#     except Exception as e:
+#         execution_time = time.time() - start_time
+#         logger.error(f"Internal server error: {str(e)}", exc_info=True)
+
+#         return {
+#             'statusCode': 500,
+#             'headers': {'Content-Type': 'application/json'},
+#             'body': json.dumps({
+#                 'error': f'Internal server error: {str(e)}',
+#                 'execution_time_seconds': execution_time,
+#                 'request_id': request_id
+#             })
+#         }
+# ```
+
+# ## Key Changes Made:
+
+# 1. **Single Bedrock Call**: Claude now formats everything for Slack in one response
+# 2. **No Double Formatting**: Removed all extra formatting functions - Claude's response goes directly to Slack
+# 3. **Enhanced System Prompt**: Claude knows exactly how to format for Slack
+# 4. **Simplified Message Sending**: `send_slack_message_with_thread` sends text directly without modification
+# 5. **Always Includes Recommendations**: System prompt ensures Claude always provides recommendations
+# 6. **Better Performance**: Reduced latency by eliminating redundant API calls
+# 7. **Cleaner Architecture**: Removed unnecessary complexity
+
+# ## Important Notes:
+
+# 1. **Add Tool Methods**: You need to add all the tool implementation methods (like `_list_ec2_instances`, `_get_ec2_instance_details`, etc.) from your original code where indicated
+# 2. **Lambda Configuration**: 
+#    - Increase memory to at least 512MB or 1024MB
+#    - Set timeout to 60 seconds
+#    - Add DynamoDB permissions to the Lambda IAM role
+# 3. **Environment Variables**: Ensure these are set:
+#    - `SLACK_BOT_TOKEN`
+#    - `SLACK_SIGNING_SECRET`
+#    - `DYNAMODB_TABLE_NAME`
+#    - `AWS_DEFAULT_REGION`
+
+# The main improvement is that Claude now handles all formatting in a single pass, eliminating duplicate messages and ensuring recommendations are always included.
+
+
+
+
+
+
+
+
+
+
+
+
+
+Reasoning: The user is saying SSM is working because it can edit and delete files on the instances. This means:
+1. SSM Agent is installed and running
+2. The instances have proper IAM roles for SSM
+3. Basic SSM connectivity is working
+
+But the patch management specific features are not working. This is a different issue. The problem is likely:
+1. Patch baselines are not configured
+2. The instances are not associated with patch groups
+3. Maintenance windows exist but might not be set up for patching
+4. The instances haven't been scanned for patches yet
+
+The warning "Unable to retrieve complete patch history for the oncall-ec2 instances" and "No maintenance window executions found in the past 7 days" suggests that while SSM is working for basic operations, the patch management component is not configured.
+
+Let me help them understand this distinction and provide the right steps to enable patch management specifically.
+
+You're absolutely right - SSM is working for basic operations (like file editing/deletion), but **Patch Manager** (a specific SSM feature) is not configured. These are two different things:
+
+## **The Distinction:**
+
+- ✅ **SSM Agent**: Working (can run commands, edit files)
+- ❌ **SSM Patch Manager**: Not configured (can't track patches)
+
+## **To Enable Patch Management:**
+
+### **Step 1: Run Initial Patch Scan**
+Since SSM is working, run this command through your bot to scan for patches:
+```
+@bot run ssm command on i-0106032745016ca2e,i-03326536e3f1be717 commands "sudo yum history"
+```
+
+Then run the official patch scan:
+```
+aws ssm send-command \
+    --document-name "AWS-RunPatchBaseline" \
+    --targets "Key=InstanceIds,Values=i-0106032745016ca2e,i-03326536e3f1be717" \
+    --parameters "Operation=Scan" \
+    --region us-east-1
+```
+
+### **Step 2: Check Current Patch State**
+```bash
+aws ssm describe-instance-patch-states \
+    --instance-ids i-0106032745016ca2e i-03326536e3f1be717 \
+    --region us-east-1
+```
+
+### **Step 3: Create Default Patch Baseline Association**
+```bash
+# Get the default patch baseline for your OS
+aws ssm describe-patch-baselines \
+    --filters "Key=OPERATING_SYSTEM,Values=AMAZON_LINUX_2" \
+    --region us-east-1
+
+# Register instances for patching
+aws ssm register-targets-with-maintenance-window \
+    --window-id "mw-xxxxxxxxx" \
+    --targets "Key=InstanceIds,Values=i-0106032745016ca2e,i-03326536e3f1be717" \
+    --owner-information "oncall-instances" \
+    --resource-type "INSTANCE"
+```
+
+### **Step 4: Enable Inventory Collection**
+```bash
+aws ssm put-inventory \
+    --instance-id i-0106032745016ca2e \
+    --items file://inventory.json
+```
+
+## **Quick Fix Through Your Bot:**
+
+Try these commands through Slack:
+```
+@bot execute tool run_ssm_command with instance_ids "i-0106032745016ca2e,i-03326536e3f1be717" and commands "sudo yum check-update | head -20"
+```
+
+Then:
+```
+@bot get patch operation results for instance i-0106032745016ca2e
+```
+
+## **The Real Issue:**
+
+Your code shows the problem in the `_get_patch_compliance_summary` function - it's trying to query patch compliance data that doesn't exist because:
+1. No patch baseline is associated with the instances
+2. No patch scans have been run
+3. The instances aren't in any patch groups
+
+## **Immediate Solution:**
+
+Add this to your Lambda to initialize patch scanning:
+```python
+def _initialize_patch_scanning(self, instance_ids: list, region: str = "us-east-1") -> str:
+    """Initialize patch scanning for instances"""
+    try:
+        ssm = boto3.client('ssm', region_name=region)
+        
+        # Send patch scan command
+        response = ssm.send_command(
+            InstanceIds=instance_ids,
+            DocumentName="AWS-RunPatchBaseline",
+            Parameters={
+                'Operation': ['Scan']
+            }
+        )
+        
+        command_id = response['Command']['CommandId']
+        
+        # Wait for completion
+        import time
+        time.sleep(10)
+        
+        # Get results
+        patch_states = ssm.describe_instance_patch_states(
+            InstanceIds=instance_ids
+        )
+        
+        return self._safe_json_response(
+            True,
+            command_id=command_id,
+            patch_states=patch_states
+        )
+    except Exception as e:
+        return self._handle_aws_error("initialize_patch_scanning", e)
+```
+
+Run a patch scan first, then the patch status check will work!

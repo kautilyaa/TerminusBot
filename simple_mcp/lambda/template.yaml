@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Terminal MCP Lambda Function with API Gateway
+
+Parameters:
+  MCPServerURL:
+    Type: String
+    Description: URL of the MCP Server (e.g., http://localhost:8080/sse)
+    Default: ""
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 512
+    Runtime: python3.11
+
+Resources:
+  TerminalMCPFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          MCP_SERVER_URL: !Ref MCPServerURL
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /execute
+            Method: POST
+            RestApiId: !Ref TerminalMCPApi
+
+  TerminalMCPApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      Auth:
+        ApiKeyRequired: true
+
+  ApiKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Description: API Key for Terminal MCP
+      Enabled: true
+      StageKeys:
+        - RestApiId: !Ref TerminalMCPApi
+          StageName: prod
+
+  UsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId: !Ref TerminalMCPApi
+          Stage: prod
+      Description: Usage plan for Terminal MCP API
+      Quota:
+        Limit: 10000
+        Period: DAY
+      Throttle:
+        BurstLimit: 100
+        RateLimit: 50
+
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref ApiKey
+      KeyType: API_KEY
+      UsagePlanId: !Ref UsagePlan
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://\${TerminalMCPApi}.execute-api.\${AWS::Region}.amazonaws.com/prod/execute'
+  ApiKeyId:
+    Description: API Key ID
+    Value: !Ref ApiKey

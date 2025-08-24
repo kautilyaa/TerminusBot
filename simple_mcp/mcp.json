@@ -1,0 +1,9 @@
+{
+    "mcpServers": {
+      "terminal": {
+        "command": "uv",
+        "args": ["run", "python", "-m", "src.terminal_mcp.server"]
+      }
+    }
+  }
+  

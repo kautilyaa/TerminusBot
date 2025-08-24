@@ -1,0 +1,486 @@
+    1  ls
+    2  cd simple_mcp/
+    3  ls
+    4  curl -Ls https://astral.sh/uv/install.sh | bash
+    5  echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+    6  source ~/.bashrc
+    7  uv
+    8  uv install python 3.12.11
+    9  uv python install 3.12.11
+   10  uv venv
+   11  source .venv/bin/activate
+   12  uv sync
+   13  python client/client.py http://localhost:8000/sse/
+   14  exit
+   15  cd simple_mcp/
+   16  source .venv/bin/activate
+   17  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   18  sudo snap install astral-uv
+   19  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   20  python -v
+   21  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   22  uv
+   23  python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   24  ls
+   25  cd simple_mcp/
+   26  ls
+   27  ps -a
+   28  source .venv/bin/activate
+   29  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   30  cd simple_mcp/
+   31  ls
+   32  source .venv/bin/activate
+   33  python client/client.py http://localhost:8000/sse/
+   34  ps -a
+   35  cd simple_mcp/
+   36  source .venv/bin/activate
+   37  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   38  cd simple_mcp/
+   39  source .venv/bin/activate
+   40  python client/client.py http://localhost:8000/sse/
+   41  sudo su -f
+   42  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+   43  sudo tail -f /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
+   44  cd simple_mcp/
+   45  source .venv/bin/activate
+   46  sudo tail -f /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
+   47  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   48  cd simple_mcp/
+   49  source .venv/bin/activate
+   50  python client/client.py http://localhost:8000/sse/
+   51  cd simple_mcp/
+   52  source .venv/bin/activate
+   53  sudo kill -9 \$(sudo lsof -t -i:8000)
+   54  sudo lsof -t -i:8000
+   55  sudo apt install screen
+   56  screen -S fastapi
+   57  # To reattach later
+   58  screen -r mcp_server
+   59  screen -ls
+   60  cd simple_mcp/
+   61  source .venv/bin/activate
+   62  python client/client.py http://localhost:8000/sse/
+   63  tail -f fastapi.log
+   64  python client/client.py ec2-13-222-180-210.compute-1.amazonaws.com/sse/
+   65  python client/client.py 13.222.180.210/sse/
+   66  python client/client.py 13.222.180.210:8000/sse/
+   67  python client/client.py 13.222.180.210/sse/
+   68  ps -a
+   69  kill 9015
+   70  kill 9024
+   71  kill 9027
+   72  ps -a
+   73  tmux pipe-pane -o -t mcp_server 'cat >> ~/mcp-server.log'
+   74  cd simple_mcp/
+   75  source .venv/bin/activate
+   76  python client/client.py 13.222.180.210:8000/sse/
+   77  curl -N http://13.222.180.210:8000/sse/
+   78  sudo netstat -tlnp | grep 8000
+   79  ps -a
+   80  sudo ss -tlnp | grep 8000
+   81  curl http://13.222.180.210:8000/latest/meta-data/security-groups
+   82  curl http://13.222.180.210/latest/meta-data/security-groups
+   83  exit
+   84  sudo su -f
+   85  cd simple_mcp/
+   86  source .venv/bin/activate
+   87  curl http://13.222.180.210/latest/meta-data/security-groups
+   88  curl http://13.222.180.210:80/latest/meta-data/security-groups
+   89  curl http://169.254.169.254/latest/meta-data/security-groups
+   90  curl http://169.254.169.254/latest/meta-data/instance-id
+   91  curl http://172.31.18.96/latest/meta-data/instance-id
+   92  curl http://13.222.180.210/latest/meta-data/security-groups
+   93  curl http://169.254.169.254/latest/meta-data/security-groups
+   94  hostname
+   95  ip addr show
+   96  whoami
+   97  pwd
+   98  curl http://172.31.18.96/latest/meta-data/instance-id
+   99  echo \$TOKEN
+  100  sudo apt install tmux
+  101  tmux new -s mcp_server
+  102  tmux attach -t mcp_server
+  103  cd /sys
+  104  ls
+  105  cd log
+  106  tail -n 100 /var/log/messages
+  107  cd ..
+  108  cd /var/log/
+  109  ls
+  110  nano auth.log 
+  111  ls -lh auth.log  # For Debian-based systems like Ubuntu
+  112  ls -lh auth.log
+  113  nano auth.log 
+  114  ls -lh auth.log
+  115  vi auth.log 
+  116  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  117  uvicorn main:app --host 0.0.0.0 --port 8000
+  118  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  119  sudo apt install screen
+  120  screen -S mcp_server
+  121  cd simple_mcp/
+  122  source .venv/bin/activate
+  123  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  124  ls
+  125  cd simple_mcp/
+  126  ls
+  127  cd aws_sever/
+  128  history -t 200
+  129  history 
+  130  cd ..
+  131  source .venv/bin/activate
+  132  cd aws_sever/
+  133  ls
+  134  free -h
+  135  source .venv/bin/activate
+  136  cd simple_mcp/
+  137  source .venv/bin/activate
+  138  ls
+  139  cd aws_sever/
+  140  ls
+  141  history
+(simple_mcp) ub
+
+
+
+
+uv run python -m server --transport sse --host 0.0.0.0 --port 8080
+
+
+
+
+
+
+
+
+  1  ls
+    2  cd simple_mcp/
+    3  ls
+    4  curl -Ls https://astral.sh/uv/install.sh | bash
+    5  echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+    6  source ~/.bashrc
+    7  uv
+    8  uv install python 3.12.11
+    9  uv python install 3.12.11
+   10  uv venv
+   11  source .venv/bin/activate
+   12  uv sync
+   13  python client/client.py http://localhost:8000/sse/
+   14  exit
+   15  cd simple_mcp/
+   16  source .venv/bin/activate
+   17  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   18  sudo snap install astral-uv
+   19  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   20  python -v
+   21  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   22  uv
+   23  python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   24  ls
+   25  cd simple_mcp/
+   26  ls
+   27  ps -a
+   28  source .venv/bin/activate
+   29  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   30  cd simple_mcp/
+   31  ls
+   32  source .venv/bin/activate
+   33  python client/client.py http://localhost:8000/sse/
+   34  ps -a
+   35  cd simple_mcp/
+   36  source .venv/bin/activate
+   37  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   38  cd simple_mcp/
+   39  source .venv/bin/activate
+   40  python client/client.py http://localhost:8000/sse/
+   41  sudo su -f
+   42  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+   43  sudo tail -f /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
+   44  cd simple_mcp/
+   45  source .venv/bin/activate
+   46  sudo tail -f /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
+   47  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+   48  cd simple_mcp/
+   49  source .venv/bin/activate
+   50  python client/client.py http://localhost:8000/sse/
+   51  cd simple_mcp/
+   52  source .venv/bin/activate
+   53  sudo kill -9 \$(sudo lsof -t -i:8000)
+   54  sudo lsof -t -i:8000
+   55  sudo apt install screen
+   56  screen -S fastapi
+   57  # To reattach later
+   58  screen -r mcp_server
+   59  screen -ls
+   60  cd simple_mcp/
+   61  source .venv/bin/activate
+   62  python client/client.py http://localhost:8000/sse/
+   63  tail -f fastapi.log
+   64  python client/client.py ec2-13-222-180-210.compute-1.amazonaws.com/sse/
+   65  python client/client.py 13.222.180.210/sse/
+   66  python client/client.py 13.222.180.210:8000/sse/
+   67  python client/client.py 13.222.180.210/sse/
+   68  ps -a
+   69  kill 9015
+   70  kill 9024
+   71  kill 9027
+   72  ps -a
+   73  tmux pipe-pane -o -t mcp_server 'cat >> ~/mcp-server.log'
+   74  cd simple_mcp/
+   75  source .venv/bin/activate
+   76  python client/client.py 13.222.180.210:8000/sse/
+   77  curl -N http://13.222.180.210:8000/sse/
+   78  sudo netstat -tlnp | grep 8000
+   79  ps -a
+   80  sudo ss -tlnp | grep 8000
+   81  curl http://13.222.180.210:8000/latest/meta-data/security-groups
+   82  curl http://13.222.180.210/latest/meta-data/security-groups
+   83  exit
+   84  sudo su -f
+   85  cd simple_mcp/
+   86  source .venv/bin/activate
+   87  curl http://13.222.180.210/latest/meta-data/security-groups
+   88  curl http://13.222.180.210:80/latest/meta-data/security-groups
+   89  curl http://169.254.169.254/latest/meta-data/security-groups
+   90  curl http://169.254.169.254/latest/meta-data/instance-id
+   91  curl http://172.31.18.96/latest/meta-data/instance-id
+   92  curl http://13.222.180.210/latest/meta-data/security-groups
+   93  curl http://169.254.169.254/latest/meta-data/security-groups
+   94  hostname
+   95  ip addr show
+   96  whoami
+   97  pwd
+   98  curl http://172.31.18.96/latest/meta-data/instance-id
+   99  echo \$TOKEN
+  100  sudo apt install tmux
+  101  tmux new -s mcp_server
+  102  tmux attach -t mcp_server
+  103  cd /sys
+  104  ls
+  105  cd log
+  106  tail -n 100 /var/log/messages
+  107  cd ..
+  108  cd /var/log/
+  109  ls
+  110  nano auth.log 
+  111  ls -lh auth.log  # For Debian-based systems like Ubuntu
+  112  ls -lh auth.log
+  113  nano auth.log 
+  114  ls -lh auth.log
+  115  vi auth.log 
+  116  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  117  uvicorn main:app --host 0.0.0.0 --port 8000
+  118  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  119  sudo apt install screen
+  120  screen -S mcp_server
+  121  cd simple_mcp/
+  122  source .venv/bin/activate
+  123  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  124  ls
+  125  cd simple_mcp/
+  126  ls
+  127  cd aws_sever/
+  128  history -t 200
+  129  history 
+  130  cd ..
+  131  source .venv/bin/activate
+  132  cd aws_sever/
+  133  ls
+  134  free -h
+  135  source .venv/bin/activate
+  136  cd simple_mcp/
+  137  source .venv/bin/activate
+  138  ls
+  139  cd aws_sever/
+  140  ls
+  141  history
+  142  uv run python -m server --transport sse --host 0.0.0.0 --port 8080
+  143  uv add BotoCore
+  144  uv run python -m server --transport sse --host 0.0.0.0 --port 8080
+  145  ls
+  146  uv pip install -r requirements.txt 
+  147  uv run python -m server --transport sse --host 0.0.0.0 --port 8080
+  148  vi server.py 
+  149  uv run python -m server --transport sse --host 0.0.0.0 --port 8080
+  150  uv python --version
+  151  python --version
+  152  python -m server --transport sse --host 0.0.0.0 --port 8080
+  153  uv   pip show fastmcp
+  154  python -m server --transport sse --host 0.0.0.0 --port 8080
+  155  python server.py sse
+  156  tmux new -s mcp_server_aws
+  157  exit
+  158  tmux list-sessions
+  159  tmux list-session
+  160  tmux
+  161  	tmux new -s aws-servers
+  162  ls /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  163  aws s3 cp s3://<oncall-bucket-vitg>/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  164  aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  165  \
+  166  sudo apt update && sudo apt install -y awscli
+  167  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  168  unzip awscliv2.zip
+  169  sudo ./aws/install
+  170  aws --version
+  171  aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  172  sudo aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  173  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  174  ls
+  175  cd simple_mcp/
+  176  tmus ls
+  177  tmux ls
+  178  ps -a
+  179  ls
+  180  cd aws_client/
+  181  ls
+  182  cd ..
+  183  cd simple_mcp/
+  184  source .venv/bin/activate
+  185  cd aws_client/
+  186  ls
+  187  python client.py http://13.222.180.210:8080/sse/
+  188  curl http://localhost:8080/health
+  189  curl curl http://localhost:8080/sse
+  190  python client.py http://13.222.180.210:8080/sse
+  191  python client.py http://localhost:8080/sse
+  192  cd ..
+  193  tmux ls
+  194  tmux detach
+  195  tmux detach
+  196  tmux list-sessions
+  197  tmux attach -t aws-servers
+  198  tmux ls
+  199  tmux -ls
+  200  tmux ls
+  201  tmux attach -t mcp_server_aws
+  202  tmux ls
+  203  cd simple_mcp/
+  204  source .venv/bin/activate
+  205  cd aws_client/
+  206  python client.py http://13.222.180.210:8080/sse/
+  207  cd simple_mcp/
+  208  source .venv/bin/activate
+  209  python client.py http://13.222.180.210:8080/sse/
+  210  python aws_client/client.py http://13.222.180.210:8080/sse/
+  211  python -m server --transport sse --host 0.0.0.0 --port 8080
+  212  ls
+  213  python client/client.py 13.222.180.210/sse/
+  214  python client/client.py 13.222.180.210:8000/sse/
+  215  python client/client.py http://13.222.180.210:8000/sse/
+  216  python aws_client/client.py http://13.222.180.210:8080/sse/
+  217  tmux ls
+  218  tmux attach -t mcp_server_aws
+  219  curl -v http://13.222.180.210:8080/sse/
+  220  netstat -tlnp | grep 8080
+  221  sudo apt install net-tools
+  222  netstat -tlnp | grep 8080
+  223  ps aux | grep 4312
+  224  kill 4312
+  225  ps aux | grep 4312
+  226  pkill 8080
+  227  ps aux | grep 4312
+  228  tmux ps
+  229  tmux ls
+  230  tmux attach -t mcp_server_aws
+  231  curl -v http://13.222.180.210:8002/sse/
+  232  netstat -tlnp | grep 8002
+  233  curl -v http://localhost:8002/health
+  234  curl -v http://localhost:8002/sse/
+  235  curl -v http://localhost:8002/sse
+  236  python aws_client/client.py http://13.222.180.210:8002/sse
+  237  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  238  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  239  ls -l /opt/aws/amazon-cloudwatch-agent/etc/
+  240  sudo aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  241  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  242  sudo aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  243  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  244  sudo aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  245  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  246  tmux attach -t mcp_server_aws
+  247  python aws_client/client.py http://13.222.180.210:8002/sse
+  248  cd simple_mcp/
+  249  source .venv/bin/activate
+  250  python aws_client/client.py http://13.222.180.210:8002/sse
+  251  python aws_client/client.py http://13.222.180.210:8002/sse/
+  252  cd simple_mcp/
+  253  source .venv/bin/activate
+  254  python aws_client/client.py http://13.222.180.210:8002/sse/
+  255  tmux attach -t mcp_server_aws
+  256  python aws_client/client.py http://13.222.180.210:8002/sse/
+  257  exit
+  258  pwd
+  259  cd /home/ubuntu/simple_mcp/aws_sever
+  260  python mcp_server.py sse
+  261  cd ..
+  262  source .venv/bin/activate
+  263  cd aws_
+  264  cd aws_sever/
+  265  python server.py sse
+  266  pkill 8080
+  267  python server.py sse
+  268  lsof -i:8080
+  269  kill $(lsof -t -i:8080)
+  270  python server.py sse
+  271  cd ..
+  272  ls
+  273  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  274  python server.py sse
+  275  cd ..
+  276  source .venv/bin/activate
+  277  python aws_server/server.py sse
+  278  ls
+  279  python aws_sever/server.py sse
+  280  cd aws_sever/
+  281  vi server.py 
+  282  cd ..
+  283  python aws_sever/server.py sse
+  284  cd aws_sever/
+  285  vi server.py 
+  286  cd ..
+  287  python aws_sever/server.py sse
+  288  python aws_sever/server.py sse 0.0.0.0 8002
+  289  python aws_sever/server.py --transport sse --host 0.0.0.0 --port 8002
+  290  cd simple_mcp/
+  291  ls
+  292  source .venv/bin/activate
+  293  cd aws_
+  294  tmux attach -t mcp_server_aws
+  295  tmux ls
+  296  history
+  297  tmux new -s aws-servers
+  298  tmux new -s aws_cloud_server
+  299  tmus ls
+  300  tmux ls
+  301  cd simple_mcp/
+  302  source .venv/bin/activate
+  303  python aws_client/client.py http://13.222.180.210:8002/sse/
+  304  tmus ls
+  305  tmux ls
+  306  tmux new -s aws_cloud_server
+  307  tmux attach -t aws_cloud_server
+  308  cd simple_mcp/
+  309  source .venv/bin/activate
+  310  python aws_client/client.py http://13.222.180.210:8002/sse/
+  311  tmux attach -t aws_cloud_server
+  312  sudo aws s3 cp s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  313  download: s3://oncall-bucket-vitg/amazon-cloudwatch-agent.json to ../../opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+  314  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json   -s
+  315  ps aux | grep cloudwatch
+  316  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a status
+  317  tmux ls
+  318  tmux attach -t aws_server
+  319  tmux attach -t aws_servers
+  320  tmux attach -t aws-servers
+  321  cd simple_mcp/
+  322  source .venv/bin/activate
+  323  history
+  324  uv run python -m src.terminal_mcp.server --transport sse --host 0.0.0.0 --port 8000
+  325  cd simple_mcp/
+  326  source .venv/bin/activate
+  327  ls
+  328  python aws_sever/server.py --transport sse --host 0.0.0.0 --port 8002
+  329  tmux ls
+  330  tmux attach -t aws_server
+  331  history
