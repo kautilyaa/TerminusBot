@@ -2,5 +2,5 @@ slack-bolt>=1.18.1
 boto3>=1.34.0
 langchain-core>=0.1.8
 langchain-community>=0.0.10
-python-dotenv>=1.0.0
+python-dotenv>=1.2.2
 botocore>=1.34.0 
